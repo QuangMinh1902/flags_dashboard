@@ -1,0 +1,6 @@
+{
+  "flags": [
+    { "id": "flag1", "status": "Libre" },
+    { "id": "flag2", "status": "Libre" }
+  ]
+}
