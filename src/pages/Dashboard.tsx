@@ -1,26 +1,36 @@
-import React, { useState } from 'react';
-import useWebSocket from 'react-use-websocket';
-import { Card, CardContent, Typography, Grid } from '@mui/material';
+import React, { useEffect, useState } from 'react';
+import { Card, CardContent, Typography, Grid, Box } from '@mui/material';
 
-function Dashboard() {
-  const [flags, setFlags] = useState({
-    flag1: 'Libre',
-    flag2: 'Libre',
-  });
+interface Flag {
+  id: string;
+  status: string;
+}
 
-  const { lastMessage } = useWebSocket('ws://172.16.8.162:8080/flag-websocket');
+const Dashboard: React.FC = () => {
+  const [flags, setFlags] = useState<Record<string, string>>({});
 
-  React.useEffect(() => {
-    if (lastMessage !== null) {
-      const message = JSON.parse(lastMessage.data);
-      if (message.type === 'flag_update') {
-        setFlags(prev => ({ ...prev, [message.flagId]: message.status }));
-      }
+  const fetchFlags = async () => {
+    try {
+      const response = await fetch('http://localhost:4000/flags');
+      const data: Flag[] = await response.json();
+      const flagsObject = data.reduce((acc: Record<string, string>, flag: Flag) => {
+        acc[flag.id] = flag.status;
+        return acc;
+      }, {});
+      setFlags(flagsObject);
+    } catch (error) {
+      console.error('Erreur lors du fetch des drapeaux :', error);
     }
-  }, [lastMessage]);
+  };
+
+  useEffect(() => {
+    fetchFlags();
+    const interval = setInterval(fetchFlags, 2000);
+    return () => clearInterval(interval);
+  }, []);
 
   return (
-    <div style={{ padding: '20px' }}>
+    <Box style={{ padding: '20px' }}>
       <Typography variant="h4" gutterBottom>
         Dashboard des Drapeaux
       </Typography>
@@ -41,8 +51,8 @@ function Dashboard() {
           </Grid>
         ))}
       </Grid>
-    </div>
+    </Box>
   );
-}
+};
 
 export default Dashboard;
